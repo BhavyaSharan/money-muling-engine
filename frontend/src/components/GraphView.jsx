@@ -34,7 +34,13 @@ export default function GraphView({ data }) {
   const elements = [...nodes, ...edges];
 
   return (
-    <div className="h-[420px] w-full rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-inner overflow-hidden">
+    <div
+      className="
+        w-full rounded-xl border border-white/10 bg-black/40 backdrop-blur-md
+        shadow-inner overflow-hidden
+        h-[260px] sm:h-[320px] md:h-[380px] lg:h-[420px]
+      "
+    >
       <CytoscapeComponent
         elements={elements}
         style={{ width: "100%", height: "100%" }}
