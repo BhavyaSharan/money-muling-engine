@@ -4,15 +4,18 @@ export default function GraphCard({ data }) {
   if (!data) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 mt-6">
-      <h2 className="text-lg font-semibold text-gray-800 mb-2">
+    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
+      <h2 className="text-xl font-semibold text-yellow-400 mb-2 tracking-wide">
         Transaction Network Graph
       </h2>
-      <p className="text-sm text-gray-500 mb-4">
+
+      <p className="text-sm text-white/70 mb-6">
         Red nodes indicate suspicious accounts
       </p>
 
-      <GraphView data={data} />
+      <div className="rounded-xl overflow-hidden border border-white/5">
+        <GraphView data={data} />
+      </div>
     </div>
   );
 }

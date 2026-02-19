@@ -34,7 +34,7 @@ export default function GraphView({ data }) {
   const elements = [...nodes, ...edges];
 
   return (
-    <div className="h-[420px] w-full border rounded-lg">
+    <div className="h-[420px] w-full rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-inner overflow-hidden">
       <CytoscapeComponent
         elements={elements}
         style={{ width: "100%", height: "100%" }}
@@ -46,7 +46,7 @@ export default function GraphView({ data }) {
               label: "data(label)",
               "text-valign": "center",
               "text-halign": "center",
-              "background-color": "#3b82f6", // blue
+              "background-color": "#3b82f6",
               color: "#ffffff",
               "font-size": 12,
               width: 40,
@@ -56,7 +56,7 @@ export default function GraphView({ data }) {
           {
             selector: "node[score > 0]",
             style: {
-              "background-color": "#ef4444", // red for suspicious
+              "background-color": "#ef4444",
               width: 50,
               height: 50,
             },

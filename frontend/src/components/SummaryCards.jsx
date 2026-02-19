@@ -9,14 +9,18 @@ export default function SummaryCards({ summary }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
       {items.map((item, i) => (
         <div
           key={i}
-          className="bg-white rounded-xl shadow p-5 text-center"
+          className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-6
+                     text-center transition-all duration-300 hover:scale-[1.03] hover:bg-white/10"
         >
-          <p className="text-sm text-gray-500">{item.label}</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">
+          <p className="text-sm text-yellow-400 tracking-wide">
+            {item.label}
+          </p>
+
+          <p className="text-3xl font-extrabold text-white mt-2">
             {item.value}
           </p>
         </div>

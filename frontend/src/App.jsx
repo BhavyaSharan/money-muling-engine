@@ -20,44 +20,49 @@ export default function App() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-red-950 text-white">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
+      <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
 
         {/* Upload Section */}
-        <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
           <UploadCard onResult={setResult} />
         </div>
 
         {result && (
           <>
             {/* Summary */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-800">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-yellow-400 tracking-wide">
                 📊 Investigation Summary
               </h2>
-              <SummaryCards summary={result.summary} />
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-6">
+                <SummaryCards summary={result.summary} />
+              </div>
             </div>
 
             {/* Download */}
             <div className="flex justify-end">
               <button
                 onClick={downloadJSON}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:scale-105 transition transform text-white px-6 py-2.5 rounded-xl shadow-md"
+                className="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700
+                           text-white px-6 py-3 rounded-xl shadow-lg
+                           transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 ⬇️ Download JSON Report
               </button>
             </div>
 
             {/* Graph */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
               <GraphCard data={result} />
             </div>
 
             {/* Fraud Rings */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
+              <h2 className="text-xl font-semibold mb-6 text-yellow-400 tracking-wide">
                 🕵️ Detected Fraud Rings
               </h2>
               <RingTable rings={result.fraud_rings} />
