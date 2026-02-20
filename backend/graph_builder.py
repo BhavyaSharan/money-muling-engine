@@ -1,10 +1,9 @@
 import networkx as nx
 
 def build_transaction_graph(df):
-    """
-    Builds a directed graph from transaction dataframe
-    """
-    G = nx.DiGraph()
+
+    # 🔥 IMPORTANT: Use MultiDiGraph
+    G = nx.MultiDiGraph()
 
     for _, row in df.iterrows():
         sender = row["sender_id"]
@@ -21,12 +20,19 @@ def build_transaction_graph(df):
             timestamp=row["timestamp"]
         )
 
-    # Add node-level metadata
+    # Precompute node metrics safely
     for node in G.nodes:
-        G.nodes[node]["in_degree"] = G.in_degree(node)
-        G.nodes[node]["out_degree"] = G.out_degree(node)
-        G.nodes[node]["total_tx_count"] = (
-            G.in_degree(node) + G.out_degree(node)
+        in_deg = G.in_degree(node)
+        out_deg = G.out_degree(node)
+
+        G.nodes[node]["in_degree"] = in_deg
+        G.nodes[node]["out_degree"] = out_deg
+        G.nodes[node]["total_tx_count"] = in_deg + out_deg
+
+        # 🔥 Add useful features for scoring
+        G.nodes[node]["is_low_activity"] = (in_deg + out_deg) <= 2
+        G.nodes[node]["is_possible_merchant"] = (
+            in_deg >= 20 and out_deg >= 20
         )
 
     return G

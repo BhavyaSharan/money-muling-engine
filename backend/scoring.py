@@ -1,16 +1,6 @@
 from collections import defaultdict
 
-def compute_suspicion_scores(cycle_rings, smurf_rings, shell_rings):
-    """
-    Returns dict:
-    {
-      account_id: {
-        suspicion_score,
-        detected_patterns,
-        ring_id
-      }
-    }
-    """
+def compute_suspicion_scores(G, all_rings):
 
     scores = defaultdict(lambda: {
         "suspicion_score": 0.0,
@@ -18,41 +8,51 @@ def compute_suspicion_scores(cycle_rings, smurf_rings, shell_rings):
         "ring_id": None
     })
 
-    # ---------- CYCLES ----------
-    for ring in cycle_rings:
-        for acc in ring["members"]:
-            scores[acc]["suspicion_score"] += 40
-            scores[acc]["detected_patterns"].append("cycle")
-            scores[acc]["ring_id"] = ring["ring_id"]
+    # -----------------------------
+    # Assign base weights per pattern
+    # -----------------------------
+    for ring in all_rings:
 
-    # ---------- SMURFING ----------
-    for ring in smurf_rings:
         pattern = ring["pattern"]
+
         for acc in ring["members"]:
-            if pattern == "fan-in":
+
+            # 🔥 GLOBAL MERCHANT FILTER
+            # Ignore high activity accounts
+            if G.nodes[acc]["total_tx_count"] > 12:
+                continue
+
+            if pattern == "cycle":
+                scores[acc]["suspicion_score"] += 25
+
+            elif pattern == "fan_in":
+                scores[acc]["suspicion_score"] += 20
+
+            elif pattern == "fan_out":
+                scores[acc]["suspicion_score"] += 20
+
+            elif pattern == "layered_shell":
                 scores[acc]["suspicion_score"] += 30
-                scores[acc]["detected_patterns"].append("fan-in")
-            elif pattern == "fan-out":
-                scores[acc]["suspicion_score"] += 30
-                scores[acc]["detected_patterns"].append("fan-out")
+
+            scores[acc]["detected_patterns"].append(pattern)
             scores[acc]["ring_id"] = ring["ring_id"]
 
-    # ---------- SHELL NETWORK ----------
-    for ring in shell_rings:
-        for acc in ring["members"]:
-            scores[acc]["suspicion_score"] += 25
-            scores[acc]["detected_patterns"].append("layered-shell")
-            scores[acc]["ring_id"] = ring["ring_id"]
-
-    # ---------- MULTI-PATTERN BONUS ----------
+    # -----------------------------
+    # MULTI-SIGNAL REQUIREMENT
+    # -----------------------------
     for acc, data in scores.items():
-        if len(set(data["detected_patterns"])) > 1:
-            data["suspicion_score"] += 10
 
-        # Clamp score
-        data["suspicion_score"] = min(100.0, data["suspicion_score"])
+        unique_patterns = set(data["detected_patterns"])
 
-        # Deduplicate patterns
-        data["detected_patterns"] = list(set(data["detected_patterns"]))
+        # ❌ REQUIRE AT LEAST 2 PATTERNS
+        if len(unique_patterns) < 2:
+            data["suspicion_score"] = 0
+            continue
+
+        # Bonus for multi-signal
+        data["suspicion_score"] += 25
+
+        data["suspicion_score"] = min(100, data["suspicion_score"])
+        data["detected_patterns"] = list(unique_patterns)
 
     return scores

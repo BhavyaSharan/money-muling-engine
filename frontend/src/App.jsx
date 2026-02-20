@@ -7,17 +7,39 @@ import RingTable from "./components/RingTable";
 
 export default function App() {
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleResult = (data) => {
+    setLoading(false);
+    setResult(data);
+    setError(null);
+  };
+
+  const handleError = (err) => {
+    setLoading(false);
+    setError(err);
+    setResult(null);
+  };
 
   const downloadJSON = () => {
+    if (!result) return;
+
     const blob = new Blob([JSON.stringify(result, null, 2)], {
       type: "application/json"
     });
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "fraud_analysis.json";
+    a.download = "fraud_analysis_report.json";
     a.click();
+    URL.revokeObjectURL(url);
   };
+
+  const highRisk =
+    result?.summary?.fraud_rings_detected > 0 ||
+    result?.summary?.suspicious_accounts_flagged > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-red-950 text-white">
@@ -27,13 +49,36 @@ export default function App() {
 
         {/* Upload Section */}
         <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
-          <UploadCard onResult={setResult} />
+          <UploadCard
+            onResult={handleResult}
+            onError={handleError}
+            setLoading={setLoading}
+          />
         </div>
+
+        {loading && (
+          <div className="text-center text-yellow-400 animate-pulse">
+            🔎 Analyzing transaction network...
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-900/40 border border-red-600 text-red-300 p-4 rounded-xl">
+            ⚠️ {error}
+          </div>
+        )}
 
         {result && (
           <>
+            {/* Risk Banner */}
+            {highRisk && (
+              <div className="bg-red-800/40 border border-red-600 text-red-300 p-6 rounded-xl shadow-lg">
+                🚨 Fraud Risk Detected — Suspicious financial patterns identified.
+              </div>
+            )}
+
             {/* Summary */}
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fadeIn">
               <h2 className="text-2xl font-semibold text-yellow-400 tracking-wide">
                 📊 Investigation Summary
               </h2>
@@ -57,6 +102,9 @@ export default function App() {
 
             {/* Graph */}
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-8">
+              <h2 className="text-xl font-semibold mb-6 text-yellow-400 tracking-wide">
+                🌐 Transaction Network Visualization
+              </h2>
               <GraphCard data={result} />
             </div>
 

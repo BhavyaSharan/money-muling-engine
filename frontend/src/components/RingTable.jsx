@@ -1,58 +1,76 @@
 export default function RingTable({ rings }) {
   if (!rings?.length) return null;
 
+  const getRiskColor = (score) => {
+    if (score >= 60) return "text-red-500";
+    if (score >= 30) return "text-yellow-400";
+    return "text-green-400";
+  };
+
+  const formatPattern = (pattern) => {
+    if (pattern === "cycle") return "Cycle Routing";
+    if (pattern === "fan_in") return "Smurfing (Fan-In)";
+    if (pattern === "fan_out") return "Smurfing (Fan-Out)";
+    if (pattern === "layered_shell") return "Layered Shell";
+    return pattern;
+  };
+
   return (
-    <div
-      className="
-        mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg
-        p-5 sm:p-6 lg:p-8
-      "
-    >
-      <h2 className="text-lg sm:text-xl font-semibold text-yellow-400 mb-4 sm:mb-6 tracking-wide">
-        Detected Fraud Rings
+    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-lg p-5 sm:p-6 lg:p-8">
+      <h2 className="text-lg sm:text-xl font-semibold text-yellow-400 mb-6 tracking-wide">
+        🕵️ Fraud Ring Summary
       </h2>
 
-      {/* Scroll wrapper */}
-      <div className="overflow-x-auto -mx-5 sm:-mx-6 lg:mx-0">
-        <div className="min-w-[700px] px-5 sm:px-6 lg:px-0">
-          <table className="w-full text-xs sm:text-sm text-white/80">
-            <thead>
-              <tr className="text-left text-white/50 border-b border-white/10">
-                <th className="pb-3 font-medium">Ring ID</th>
-                <th className="pb-3 font-medium">Pattern</th>
-                <th className="pb-3 font-medium">Members</th>
-                <th className="pb-3 font-medium">Risk Score</th>
-              </tr>
-            </thead>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs sm:text-sm text-white/80 min-w-[850px]">
+          <thead>
+            <tr className="text-left text-white/50 border-b border-white/10">
+              <th className="pb-3 font-medium">Ring ID</th>
+              <th className="pb-3 font-medium">Pattern Type</th>
+              <th className="pb-3 font-medium">Member Count</th>
+              <th className="pb-3 font-medium">Risk Score</th>
+              <th className="pb-3 font-medium">Member Accounts</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {rings.map((r) => (
-                <tr
-                  key={r.ring_id}
-                  className="border-b border-white/5 last:border-0 hover:bg-white/5 transition"
-                >
-                  <td className="py-3 font-semibold text-white whitespace-nowrap">
-                    {r.ring_id}
-                  </td>
+          <tbody>
+            {rings.map((r) => (
+              <tr
+                key={r.ring_id}
+                className="border-b border-white/5 last:border-0 hover:bg-white/5 transition"
+              >
+                {/* Ring ID */}
+                <td className="py-3 font-semibold text-white whitespace-nowrap">
+                  {r.ring_id}
+                </td>
 
-                  <td className="py-3 whitespace-nowrap">
-                    <span className="inline-block bg-red-500/15 text-red-400 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border border-red-500/30">
-                      {r.pattern_type}
-                    </span>
-                  </td>
+                {/* Pattern */}
+                <td className="py-3 whitespace-nowrap">
+                  <span className="inline-block bg-red-500/15 text-red-400 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border border-red-500/30">
+                    {formatPattern(r.pattern_type)}
+                  </span>
+                </td>
 
-                  <td className="py-3 text-white/70">
+                {/* Member Count */}
+                <td className="py-3 text-white/80 font-medium">
+                  {r.member_accounts.length}
+                </td>
+
+                {/* Risk Score */}
+                <td className={`py-3 font-bold whitespace-nowrap ${getRiskColor(r.risk_score)}`}>
+                  {r.risk_score}
+                </td>
+
+                {/* Members */}
+                <td className="py-3 text-white/60 max-w-[400px]">
+                  <div className="truncate">
                     {r.member_accounts.join(", ")}
-                  </td>
-
-                  <td className="py-3 font-bold text-red-400 whitespace-nowrap">
-                    {r.risk_score}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

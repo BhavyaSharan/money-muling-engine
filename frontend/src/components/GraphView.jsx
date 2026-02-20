@@ -1,50 +1,76 @@
 import CytoscapeComponent from "react-cytoscapejs";
+import { useMemo } from "react";
 
 export default function GraphView({ data }) {
   if (!data) return null;
 
-  // ----------- Build Nodes -----------
-  const nodes = data.suspicious_accounts.map((acc) => ({
-    data: {
-      id: acc.account_id,
-      label: acc.account_id,
-      score: acc.suspicion_score,
-      patterns: acc.detected_patterns.join(", "),
-    },
-  }));
+  const suspiciousSet = new Set(
+    data.suspicious_accounts.map((a) => a.account_id)
+  );
 
-  // ----------- Build Edges from Fraud Rings -----------
-  const edges = [];
+  const ringColorMap = {};
+  const ringColors = [
+    "#facc15",
+    "#22c55e",
+    "#a855f7",
+    "#f97316",
+    "#06b6d4",
+  ];
 
-  data.fraud_rings.forEach((ring) => {
-    const members = ring.member_accounts;
-
-    for (let i = 0; i < members.length - 1; i++) {
-      edges.push({
-        data: {
-          id: `${members[i]}-${members[i + 1]}-${ring.ring_id}`,
-          source: members[i],
-          target: members[i + 1],
-          ring: ring.ring_id,
-        },
-      });
-    }
+  data.fraud_rings.forEach((ring, index) => {
+    ringColorMap[ring.ring_id] =
+      ringColors[index % ringColors.length];
   });
 
-  const elements = [...nodes, ...edges];
+  const elements = useMemo(() => {
+    const nodes = new Map();
+
+    // 1️⃣ Build all nodes from edges
+    data.graph_edges.forEach(({ source, target }) => {
+      nodes.set(source, true);
+      nodes.set(target, true);
+    });
+
+    const nodeElements = Array.from(nodes.keys()).map((id) => {
+      const suspicious = suspiciousSet.has(id);
+
+      const account = data.suspicious_accounts.find(
+        (a) => a.account_id === id
+      );
+
+      const ringId = account?.ring_id;
+      const ringColor = ringColorMap[ringId];
+
+      return {
+        data: {
+          id,
+          label: id,
+          score: account?.suspicion_score || 0,
+          patterns: account?.detected_patterns?.join(", ") || "None",
+          suspicious,
+          ringColor,
+        },
+      };
+    });
+
+    // 2️⃣ Build edges from real transaction data
+    const edgeElements = data.graph_edges.map((e, index) => ({
+      data: {
+        id: `${e.source}-${e.target}-${index}`,
+        source: e.source,
+        target: e.target,
+      },
+    }));
+
+    return [...nodeElements, ...edgeElements];
+  }, [data]);
 
   return (
-    <div
-      className="
-        w-full rounded-xl border border-white/10 bg-black/40 backdrop-blur-md
-        shadow-inner overflow-hidden
-        h-[260px] sm:h-[320px] md:h-[380px] lg:h-[420px]
-      "
-    >
+    <div className="w-full h-full">
       <CytoscapeComponent
         elements={elements}
         style={{ width: "100%", height: "100%" }}
-        layout={{ name: "cose" }}
+    layout={{ name: "grid" }}
         stylesheet={[
           {
             selector: "node",
@@ -53,18 +79,27 @@ export default function GraphView({ data }) {
               "text-valign": "center",
               "text-halign": "center",
               "background-color": "#3b82f6",
-              color: "#ffffff",
-              "font-size": 12,
-              width: 40,
-              height: 40,
+              color: "#fff",
+              "font-size": 10,
+              width: 30,
+              height: 30,
             },
           },
           {
-            selector: "node[score > 0]",
+            selector: "node[suspicious = true]",
             style: {
               "background-color": "#ef4444",
-              width: 50,
-              height: 50,
+              width: 45,
+              height: 45,
+              "border-width": 3,
+              "border-color": "#ffffff",
+            },
+          },
+          {
+            selector: "node[ringColor]",
+            style: {
+              "border-width": 4,
+              "border-color": "data(ringColor)",
             },
           },
           {
@@ -78,6 +113,25 @@ export default function GraphView({ data }) {
             },
           },
         ]}
+        cy={(cy) => {
+          cy.on("mouseover", "node", function (evt) {
+            const node = evt.target;
+            node.qtip({
+              content: `
+                <div style="padding:6px;">
+                  <strong>${node.data("id")}</strong><br/>
+                  Score: ${node.data("score")}<br/>
+                  Patterns: ${node.data("patterns")}
+                </div>
+              `,
+              show: { event: evt.type, ready: true },
+              hide: { event: "mouseout unfocus" },
+              style: {
+                classes: "qtip-dark",
+              },
+            });
+          });
+        }}
       />
     </div>
   );
