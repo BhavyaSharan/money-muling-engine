@@ -1,7 +1,10 @@
 import CytoscapeComponent from "react-cytoscapejs";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import AccountExplanation from "./AccountExplanation";
 
 export default function GraphView({ data }) {
+  const [selectedNode, setSelectedNode] = useState(null);
+
   if (!data) return null;
 
   const suspiciousSet = new Set(
@@ -25,35 +28,28 @@ export default function GraphView({ data }) {
   const elements = useMemo(() => {
     const nodes = new Map();
 
-    // 1️⃣ Build all nodes from edges
+    // 🔹 Build nodes
     data.graph_edges.forEach(({ source, target }) => {
       nodes.set(source, true);
       nodes.set(target, true);
     });
 
     const nodeElements = Array.from(nodes.keys()).map((id) => {
-      const suspicious = suspiciousSet.has(id);
-
       const account = data.suspicious_accounts.find(
         (a) => a.account_id === id
       );
-
-      const ringId = account?.ring_id;
-      const ringColor = ringColorMap[ringId];
 
       return {
         data: {
           id,
           label: id,
-          score: account?.suspicion_score || 0,
-          patterns: account?.detected_patterns?.join(", ") || "None",
-          suspicious,
-          ringColor,
+          suspicious: suspiciousSet.has(id),
+          ringColor: account ? ringColorMap[account.ring_id] : null,
         },
       };
     });
 
-    // 2️⃣ Build edges from real transaction data
+    // 🔹 Build edges
     const edgeElements = data.graph_edges.map((e, index) => ({
       data: {
         id: `${e.source}-${e.target}-${index}`,
@@ -66,73 +62,79 @@ export default function GraphView({ data }) {
   }, [data]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
       <CytoscapeComponent
         elements={elements}
         style={{ width: "100%", height: "100%" }}
-    layout={{ name: "grid" }}
+        layout={{
+  name: "grid",
+  fit: true,
+}}
         stylesheet={[
           {
             selector: "node",
             style: {
-              label: "data(label)",
-              "text-valign": "center",
-              "text-halign": "center",
+              label: "data(id)",
               "background-color": "#3b82f6",
               color: "#fff",
-              "font-size": 10,
-              width: 30,
-              height: 30,
+              "font-size": 8,
+              width: 20,
+              height: 20,
             },
           },
           {
             selector: "node[suspicious = true]",
             style: {
               "background-color": "#ef4444",
-              width: 45,
-              height: 45,
-              "border-width": 3,
+              width: 35,
+              height: 35,
+              "border-width": 2,
               "border-color": "#ffffff",
             },
           },
           {
             selector: "node[ringColor]",
             style: {
-              "border-width": 4,
+              "border-width": 3,
               "border-color": "data(ringColor)",
             },
           },
           {
             selector: "edge",
             style: {
-              width: 2,
-              "line-color": "#9ca3af",
-              "target-arrow-color": "#9ca3af",
+              width: 1,
+              "line-color": "#6b7280",
+              "target-arrow-color": "#6b7280",
               "target-arrow-shape": "triangle",
               "curve-style": "bezier",
             },
           },
         ]}
         cy={(cy) => {
-          cy.on("mouseover", "node", function (evt) {
+          cy.on("tap", "node", (evt) => {
             const node = evt.target;
-            node.qtip({
-              content: `
-                <div style="padding:6px;">
-                  <strong>${node.data("id")}</strong><br/>
-                  Score: ${node.data("score")}<br/>
-                  Patterns: ${node.data("patterns")}
-                </div>
-              `,
-              show: { event: evt.type, ready: true },
-              hide: { event: "mouseout unfocus" },
-              style: {
-                classes: "qtip-dark",
-              },
-            });
+            setSelectedNode(node.data("id"));
           });
         }}
       />
+
+      {/* Explanation Panel */}
+      {selectedNode && (
+        <div className="absolute bottom-4 left-4 bg-black/90 text-white p-5 rounded-xl text-xs w-72 border border-white/20 shadow-xl">
+          <AccountExplanation
+            accountId={selectedNode}
+            data={data.suspicious_accounts.find(
+              (a) => a.account_id === selectedNode
+            )}
+          />
+          <button
+            onClick={() => setSelectedNode(null)}
+            className="mt-3 text-red-400 text-xs"
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }
