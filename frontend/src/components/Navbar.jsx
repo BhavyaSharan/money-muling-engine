@@ -28,18 +28,7 @@ export default function Navbar() {
         </div>
 
         {/* Right badge */}
-        <span
-          className="
-            self-start sm:self-auto
-            text-[11px] sm:text-xs
-            font-semibold
-            bg-white/10 text-yellow-400
-            px-3 sm:px-4 py-1.5
-            rounded-full border border-white/10 backdrop-blur-md
-          "
-        >
-          🚀 RIFT Hackathon 2026
-        </span>
+        
       </div>
     </div>
   );
